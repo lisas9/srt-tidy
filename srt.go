@@ -16,6 +16,10 @@ type Subtitle struct {
 	Start time.Duration
 	End   time.Duration
 	Text  []string
+
+	// Line is the input line number of the timing line, kept around so
+	// cross-entry checks (overlap, ordering) can point at the right place.
+	Line int
 }
 
 // ParseError points at the input line that failed validation, since SRT
@@ -63,7 +67,34 @@ func ParseSRT(r io.Reader) ([]Subtitle, error) {
 		}
 		subs = append(subs, sub)
 	}
+
+	if err := checkOrdering(subs); err != nil {
+		return nil, err
+	}
 	return subs, nil
+}
+
+// checkOrdering verifies that cues are sorted by start time and don't
+// overlap. Both problems are common after a lossy frame rate conversion,
+// and playback behavior when they occur is undefined per-player, so it's
+// worth catching here rather than letting each renderer guess differently.
+func checkOrdering(subs []Subtitle) error {
+	for i := 1; i < len(subs); i++ {
+		prev, cur := subs[i-1], subs[i]
+		if cur.Start < prev.Start {
+			return &ParseError{
+				Line: cur.Line,
+				Msg:  fmt.Sprintf("entry %d starts before entry %d (out of order)", cur.Index, prev.Index),
+			}
+		}
+		if cur.Start < prev.End {
+			return &ParseError{
+				Line: cur.Line,
+				Msg:  fmt.Sprintf("entry %d overlaps entry %d", cur.Index, prev.Index),
+			}
+		}
+	}
+	return nil
 }
 
 // splitBlocks groups lines into cues separated by one or more blank lines.
@@ -114,7 +145,7 @@ func parseBlock(block []lineRec, position int) (Subtitle, error) {
 		text = append(text, l.text)
 	}
 
-	return Subtitle{Index: index, Start: start, End: end, Text: text}, nil
+	return Subtitle{Index: index, Start: start, End: end, Text: text, Line: timingLine.num}, nil
 }
 
 func parseTimingLine(s string) (start, end time.Duration, err error) {

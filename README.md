@@ -37,6 +37,7 @@ $ ffmpeg -i movie.mkv -map 0:s:0 -f srt - | srt-tidy fmt > movie.srt
 - each entry has a `HH:MM:SS,mmm --> HH:MM:SS,mmm` timing line
 - the start time is strictly before the end time
 - every entry has at least one line of text
+- entries are sorted by start time, with no overlap between consecutive entries
 
 Anything else is reported as `line N: <reason>` pointing at the
 offending line in the input.
@@ -51,9 +52,9 @@ go build ./...
 
 ## Status
 
-Early. The parser and formatter handle plain SubRip; things like
-overlap detection between consecutive cues, WebVTT input, and
-encoding sniffing are not done yet.
+Early. The parser and formatter handle plain SubRip, including
+overlap and ordering checks between consecutive cues; things like
+WebVTT input and encoding sniffing are not done yet.
 
 ## License
 
