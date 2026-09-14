@@ -41,6 +41,16 @@ type lineRec struct {
 // ParseSRT reads a SubRip file and returns its cues, or the first validation
 // error encountered. It accepts both LF and CRLF line endings.
 func ParseSRT(r io.Reader) ([]Subtitle, error) {
+	recs, err := readLines(r)
+	if err != nil {
+		return nil, err
+	}
+	return parseSRTLines(recs)
+}
+
+// readLines splits input into numbered lines, stripping a trailing \r so
+// both LF and CRLF input work the same way.
+func readLines(r io.Reader) ([]lineRec, error) {
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 
@@ -53,7 +63,10 @@ func ParseSRT(r io.Reader) ([]Subtitle, error) {
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("reading input: %w", err)
 	}
+	return recs, nil
+}
 
+func parseSRTLines(recs []lineRec) ([]Subtitle, error) {
 	blocks := splitBlocks(recs)
 	if len(blocks) == 0 {
 		return nil, errors.New("no subtitle entries found")

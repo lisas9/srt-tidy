@@ -37,11 +37,14 @@ func main() {
 }
 
 func usage(w io.Writer) {
-	fmt.Fprint(w, `srt-tidy - validate and pretty-print SubRip (.srt) subtitle files
+	fmt.Fprint(w, `srt-tidy - validate and pretty-print SubRip (.srt) and WebVTT (.vtt) subtitle files
 
 Usage:
   srt-tidy check [file]   validate a subtitle file, reading stdin if file is omitted or "-"
-  srt-tidy fmt [file]     print a normalized version of a subtitle file to stdout
+  srt-tidy fmt [file]     print a normalized SubRip version of a subtitle file to stdout
+
+Input format (SubRip or WebVTT) is detected automatically. Output is
+always normalized SubRip.
 `)
 }
 
@@ -65,7 +68,7 @@ func runCheck(args []string) error {
 	}
 	defer closeFn()
 
-	subs, err := ParseSRT(r)
+	subs, err := Parse(r)
 	if err != nil {
 		return fmt.Errorf("%s: %w", name, err)
 	}
@@ -80,7 +83,7 @@ func runFmt(args []string) error {
 	}
 	defer closeFn()
 
-	subs, err := ParseSRT(r)
+	subs, err := Parse(r)
 	if err != nil {
 		return fmt.Errorf("%s: %w", name, err)
 	}

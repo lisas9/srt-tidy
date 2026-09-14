@@ -6,6 +6,11 @@ actually calls for, and every tool seems to disagree about how many
 blank lines belong between entries. `srt-tidy` parses `.srt` files
 strictly enough to catch that, and reprints them in a normalized form.
 
+It also reads WebVTT (`.vtt`) input, detected automatically from the
+`WEBVTT` signature line, and normalizes it into the same SubRip output.
+Cue settings, styling, and regions in the source file are dropped since
+SubRip has no equivalent for them.
+
 ## Usage
 
 Validate a file:
@@ -52,9 +57,11 @@ go build ./...
 
 ## Status
 
-Early. The parser and formatter handle plain SubRip, including
-overlap and ordering checks between consecutive cues; things like
-WebVTT input and encoding sniffing are not done yet.
+Early. The parser and formatter handle plain SubRip and the common
+subset of WebVTT, including overlap and ordering checks between
+consecutive cues; there are no unit tests yet, `fmt` only writes to
+stdout (no in-place rewrite), and non-UTF8 input including a leading
+BOM is not handled.
 
 ## License
 
