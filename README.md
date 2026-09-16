@@ -59,9 +59,8 @@ go build ./...
 
 Early. The parser and formatter handle plain SubRip and the common
 subset of WebVTT, including overlap and ordering checks between
-consecutive cues; there are no unit tests yet, `fmt` only writes to
-stdout (no in-place rewrite), and non-UTF8 input including a leading
-BOM is not handled.
+consecutive cues; `fmt` only writes to stdout (no in-place rewrite),
+and non-UTF8 input including a leading BOM is not handled.
 
 ## License
 
