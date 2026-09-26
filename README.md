@@ -27,6 +27,15 @@ collapses blank-line runs to one):
 $ srt-tidy fmt movie.srt > movie.clean.srt
 ```
 
+Or rewrite the file in place with `--write`:
+
+```
+$ srt-tidy fmt --write movie.srt
+```
+
+`--write` requires an actual file path; it refuses stdin since there's
+nowhere to write back to.
+
 Both commands read from stdin when no file is given, or when the
 file argument is `-`. That means it composes with pipelines instead
 of needing a temp file:
@@ -59,8 +68,8 @@ go build ./...
 
 Early. The parser and formatter handle plain SubRip and the common
 subset of WebVTT, including overlap and ordering checks between
-consecutive cues; `fmt` only writes to stdout (no in-place rewrite),
-and non-UTF8 input including a leading BOM is not handled.
+consecutive cues, and `fmt --write` rewrites files in place. Non-UTF8
+input, including a leading BOM, is not handled yet.
 
 ## License
 

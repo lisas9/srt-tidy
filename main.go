@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -40,8 +42,9 @@ func usage(w io.Writer) {
 	fmt.Fprint(w, `srt-tidy - validate and pretty-print SubRip (.srt) and WebVTT (.vtt) subtitle files
 
 Usage:
-  srt-tidy check [file]   validate a subtitle file, reading stdin if file is omitted or "-"
-  srt-tidy fmt [file]     print a normalized SubRip version of a subtitle file to stdout
+  srt-tidy check [file]         validate a subtitle file, reading stdin if file is omitted or "-"
+  srt-tidy fmt [file]           print a normalized SubRip version of a subtitle file to stdout
+  srt-tidy fmt --write file     normalize the file in place instead of printing to stdout
 
 Input format (SubRip or WebVTT) is detected automatically. Output is
 always normalized SubRip.
@@ -77,7 +80,21 @@ func runCheck(args []string) error {
 }
 
 func runFmt(args []string) error {
-	r, name, closeFn, err := openInput(args)
+	write := false
+	var rest []string
+	for _, a := range args {
+		if a == "--write" {
+			write = true
+			continue
+		}
+		rest = append(rest, a)
+	}
+
+	if write && (len(rest) == 0 || rest[0] == "-") {
+		return errors.New("fmt --write requires a file path, not stdin")
+	}
+
+	r, name, closeFn, err := openInput(rest)
 	if err != nil {
 		return err
 	}
@@ -87,5 +104,17 @@ func runFmt(args []string) error {
 	if err != nil {
 		return fmt.Errorf("%s: %w", name, err)
 	}
-	return WriteSRT(os.Stdout, subs)
+
+	if !write {
+		return WriteSRT(os.Stdout, subs)
+	}
+
+	var buf bytes.Buffer
+	if err := WriteSRT(&buf, subs); err != nil {
+		return err
+	}
+	if err := closeFn(); err != nil {
+		return err
+	}
+	return os.WriteFile(name, buf.Bytes(), 0o644)
 }
